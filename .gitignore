@@ -148,6 +148,12 @@ venv.bak/
 .spyderproject
 .spyproject
 
+.idea
+.idea/
+/.idea/*
+.idea/workspace.xml
+.idea/shelf/
+
 # Rope project settings
 .ropeproject
 
