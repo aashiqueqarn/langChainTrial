@@ -1,27 +1,14 @@
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_openai_tools_agent, AgentExecutor
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.tools import Tool
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_tavily import TavilySearch
 
-import requests
 
 load_dotenv()
 
-# ---- TOOL ----
-def search_weather(query: str) -> str:
-    """Fetch weather for a city using a free public API."""
-    url = f"https://wttr.in/{query}?format=3"
-    response = requests.get(url)
-    return response.text
 
-tools = [
-    Tool(
-        name="weather_search",
-        func=search_weather,
-        description="Get current weather for a city. Input should be a city name."
-    )
-]
+tools = [TavilySearch()]
 
 # ---- LLM ----
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -29,8 +16,8 @@ llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 # ---- PROMPT ----
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful agent that uses tools when needed."),
-    ("human", "{input}"),
-    MessagesPlaceholder("agent_scratchpad"),
+    ("user", "{input}"),
+    ("assistant", "{agent_scratchpad}")
 ])
 
 # ---- AGENT ----
