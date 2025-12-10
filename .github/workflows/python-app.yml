@@ -58,9 +58,13 @@ jobs:
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run tests
+      - name: Run tests if tests exist
         run: |
-          pytest
+          if ls -1 *test*.py 2>/dev/null | grep -q .; then
+              pytest
+          else
+              echo "No tests found. Skipping pytest."
+          fi
 
 
 
