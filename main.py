@@ -1,30 +1,43 @@
 from dotenv import load_dotenv
+from langchain import hub
+from langchain.agents import AgentExecutor
+from langchain.agents.react.agent import create_react_agent
+from langchain_core.output_parsers.pydantic import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-# from langchain_perplexity import ChatPerplexity
-from langchain_ollama import OllamaLLM
+from langchain_core.runnables import RunnableLambda
+from langchain_openai import ChatOpenAI
+from langchain_tavily import TavilySearch
 
+from prompt import REACT_PROMPT_WITH_FORMAT_INSTRUCTIONS
+from schemas import AgentResponse
 
 
 load_dotenv()
+tools = [TavilySearch()]
+llm = ChatOpenAI(model="gpt-4", temperature=0)
+react_prompt = hub.pull("hwchase17/react")
+
+output_parser = PydanticOutputParser(pydantic_object=AgentResponse)
+
+react_prompt_with_format_instructions = PromptTemplate(
+    template=REACT_PROMPT_WITH_FORMAT_INSTRUCTIONS,
+    input_variables=["input", "agent_scratchpad", "tool_names"],
+).partial(format_instructions=output_parser.get_format_instructions())
+
+
+agent = create_react_agent(
+    llm=llm,
+    tools=tools,
+    prompt=react_prompt_with_format_instructions
+)
+
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+chain = agent_executor
+
 def main():
-    print("Hello world")
-    information = """
-        Madhesh Province (Nepali: मधेश प्रदेश, romanized: Madhēśa pradēśa) is a province of Nepal in the Terai region with an area of 9,661 km2 (3,730 sq mi) covering about 6.5% of the country's total area. 
-        It has a population of 6,114,600 as per the 2021 Nepal census, making it Nepal's most densely populated province and the smallest province by area.
-        It borders Koshi Pradesh to the east and the north, Bagmati Province to the north, and India’s Bihar state to the south and the west.
-        The border between Chitwan National Park and Parsa National Park acts as the provincial boundary in the west, and the Kosi River forms the provincial border in the east. 
-        The province includes eight districts, from Parsa in the west to Saptari in the east. 
-        It is a centre for religious and cultural tourism"""
-    summary_template = """
-    given information {information} is about the place I want you to create:
-    1. A short summary
-    2. two interesting facts about it.
-    """
-    summary_prompt_template = PromptTemplate(input_variables=["Information"], template=summary_template)
-    llm = OllamaLLM(temperature=0, model="gemma3:270m")
-    chain = summary_prompt_template | llm
-    response = chain.invoke(input={"information": information})
-    print(response)
+    result = chain.invoke({"input": "Search for 3 job postings for an ai engineer using langchain in the bay area on the linked and list their title with salary and link to the posting."})
+    print("\n=== Final Output ===")
+    print(result["output"])
 
 if __name__ == "__main__":
     main()

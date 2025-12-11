@@ -96,6 +96,10 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Execute search agent
+      - name: Execute search_agent.py
         run: |
           python search_agent.py
+
+      - name: Execute main.py
+        run: |
+          python main.py
