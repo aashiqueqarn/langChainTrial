@@ -32,12 +32,14 @@ agent = create_react_agent(
 )
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-chain = agent_executor
+extract_output = RunnableLambda(lambda x: x["output"])
+parse_output = RunnableLambda(lambda x: output_parser.parse(x))
+chain = agent_executor | extract_output | parse_output
 
 def main():
     result = chain.invoke({"input": "Search for 3 job postings for an ai engineer using langchain in the bay area on the linked and list their title with salary and link to the posting."})
     print("\n=== Final Output ===")
-    print(result["output"])
+    print(result)
 
 if __name__ == "__main__":
     main()
